@@ -93,7 +93,6 @@ PHP_MINIT_FUNCTION(flakeid)
 	unsigned char mac[6];
 
 	if (FLAKEID_G(if_name) && !get_mac(FLAKEID_G(if_name), mac)) {
-		zend_printf("shit");
 		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(mac, 6);
 	} else if (FLAKEID_G(enable_spoof)) {
 		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create_with_spoof();
