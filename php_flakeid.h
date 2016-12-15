@@ -44,6 +44,8 @@ extern zend_module_entry flakeid_module_entry;
 // and END macros here:
 ZEND_BEGIN_MODULE_GLOBALS(flakeid)
 	flakeid_ctx_t *flakeid_ctx;
+	char *if_name;
+	zend_bool enable_spoof;
 ZEND_END_MODULE_GLOBALS(flakeid)
 
 /* In every utility function you add that needs to use variables

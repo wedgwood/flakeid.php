@@ -37,12 +37,13 @@ static int le_flakeid;
 
 /* {{{ PHP_INI
  */
-/* Remove comments and fill if you need to have entries in php.ini
+/*
+ * Remove comments and fill if you need to have entries in php.ini
+ */
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("flakeid.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_flakeid_globals, flakeid_globals)
-    STD_PHP_INI_ENTRY("flakeid.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_flakeid_globals, flakeid_globals)
+	STD_PHP_INI_ENTRY("flakeid.if_name", "eth0", PHP_INI_ALL, OnUpdateStringUnempty, if_name, zend_flakeid_globals, flakeid_globals)
+	STD_PHP_INI_ENTRY("flakeid.enable_spoof", "on", PHP_INI_ALL, OnUpdateBool, enable_spoof, zend_flakeid_globals, flakeid_globals)
 PHP_INI_END()
-*/
 /* }}} */
 
 /* Remove the following function when you have successfully modified config.m4
@@ -88,16 +89,19 @@ static void php_flakeid_init_globals(zend_flakeid_globals *flakeid_globals)
  */
 PHP_MINIT_FUNCTION(flakeid)
 {
-	/* If you have INI entries, uncomment these lines
 	REGISTER_INI_ENTRIES();
-	*/
 	unsigned char mac[6];
 
-	if (get_mac("eth0", mac)) {
+	if (FLAKEID_G(if_name) && !get_mac(FLAKEID_G(if_name), mac)) {
+		zend_printf("shit");
+		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(mac, 6);
+	} else if (FLAKEID_G(enable_spoof)) {
+		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create_with_spoof();
+	} else {
+		FLAKEID_G(flakeid_ctx) = NULL;
 		return FAILURE;
 	}
 
-	FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(mac, 6);
 	return SUCCESS;
 }
 /* }}} */
@@ -106,9 +110,8 @@ PHP_MINIT_FUNCTION(flakeid)
  */
 PHP_MSHUTDOWN_FUNCTION(flakeid)
 {
-	/* uncomment this line if you have INI entries
 	UNREGISTER_INI_ENTRIES();
-	*/
+
 	if (FLAKEID_G(flakeid_ctx)) {
 		flake_ctx_destroy(FLAKEID_G(flakeid_ctx));
 		FLAKEID_G(flakeid_ctx) = NULL;

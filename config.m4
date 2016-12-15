@@ -45,9 +45,8 @@ if test "$PHP_FLAKEID" != "no"; then
 
   dnl # --with-flakeid -> check for lib and symbol presence
   LIBNAME=flakeid
-  LIBSYMBOL=flakeid_generate
 
-  PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
+  PHP_CHECK_LIBRARY($LIBNAME,flakeid_generate,
   [
     PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $FLAKEID_DIR/lib, FLAKEID_SHARED_LIBADD)
     AC_DEFINE(HAVE_FLAKEIDLIB,1,[ ])
@@ -56,6 +55,26 @@ if test "$PHP_FLAKEID" != "no"; then
   ],[
     -L$FLAKEID_DIR/lib -lm
   ])
+
+  dnl  PHP_CHECK_LIBRARY($LIBNAME,flakeid_ctx_create,
+  dnl  [
+    dnl  PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $FLAKEID_DIR/lib, FLAKEID_SHARED_LIBADD)
+    dnl  AC_DEFINE(HAVE_FLAKEIDLIB,1,[ ])
+  dnl  ],[
+    dnl  AC_MSG_ERROR([wrong flakeid lib version or lib not found])
+  dnl  ],[
+    dnl  -L$FLAKEID_DIR/lib -lm
+  dnl  ])
+
+  dnl  PHP_CHECK_LIBRARY($LIBNAME,flakeid_ctx_create_with_spoof,
+  dnl  [
+    dnl  PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $FLAKEID_DIR/lib, FLAKEID_SHARED_LIBADD)
+    dnl  AC_DEFINE(HAVE_FLAKEIDLIB,1,[ ])
+  dnl  ],[
+    dnl  AC_MSG_ERROR([wrong flakeid lib version or lib not found])
+  dnl  ],[
+    dnl  -L$FLAKEID_DIR/lib -lm
+  dnl  ])
 
   PHP_SUBST(FLAKEID_SHARED_LIBADD)
   PHP_NEW_EXTENSION(flakeid, flakeid.c, $ext_shared)
