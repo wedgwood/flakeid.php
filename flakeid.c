@@ -101,6 +101,7 @@ PHP_MINIT_FUNCTION(flakeid)
 		return FAILURE;
 	}
 
+	FLAKEID_G(flakeid64_ctx) = flakeid64_ctx_create_with_spoof();
 	return SUCCESS;
 }
 /* }}} */
@@ -114,6 +115,11 @@ PHP_MSHUTDOWN_FUNCTION(flakeid)
 	if (FLAKEID_G(flakeid_ctx)) {
 		flake_ctx_destroy(FLAKEID_G(flakeid_ctx));
 		FLAKEID_G(flakeid_ctx) = NULL;
+	}
+
+	if (FLAKEID_G(flakeid64_ctx)) {
+		flake64_ctx_destroy(FLAKEID_G(flakeid64_ctx));
+		FLAKEID_G(flakeid64_ctx) = NULL;
 	}
 
 	return SUCCESS;
@@ -193,6 +199,30 @@ ZEND_FUNCTION(flakeid_generate)
 	}
 }
 
+ZEND_FUNCTION(flakeid_generate64)
+{
+	zend_bool raw_output = 0;
+
+	if (zend_parse_parameters(
+		ZEND_NUM_ARGS() TSRMLS_CC,
+		"|b",
+		&raw_output) == FAILURE
+	) {
+		RETURN_NULL();
+	}
+
+	int64_t id;
+	flakeid64_get(FLAKEID_G(flakeid64_ctx), &id);
+
+	if (raw_output) {
+		RETURN_STRINGL((char *)&id, 8, 1);
+	} else {
+		unsigned char hexstr[16];
+		flakeid64_hexdump(id, hexstr);
+		RETURN_STRINGL(hexstr, 16 , 1);
+	}
+}
+
 /* {{{ flakeid_functions[]
  *
  * Every user visible function must have an entry in flakeid_functions[].
@@ -200,6 +230,7 @@ ZEND_FUNCTION(flakeid_generate)
 const zend_function_entry flakeid_functions[] = {
 	PHP_FE(confirm_flakeid_compiled,	NULL)		/* For testing, remove later. */
 	PHP_FE(flakeid_generate,	NULL)		/* For testing, remove later. */
+	PHP_FE(flakeid_generate64,	NULL)		/* For testing, remove later. */
 	PHP_FE_END	/* Must be the last line in flakeid_functions[] */
 };
 /* }}} */
