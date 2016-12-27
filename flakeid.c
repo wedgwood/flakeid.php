@@ -46,27 +46,6 @@ PHP_INI_BEGIN()
 PHP_INI_END()
 /* }}} */
 
-/* Remove the following function when you have successfully modified config.m4
-   so that your module can be compiled into PHP, it exists only for testing
-   purposes. */
-
-/* Every user-visible function in PHP should document itself in the source */
-/* {{{ proto string confirm_flakeid_compiled(string arg)
-   Return a string to confirm that the module is compiled in */
-PHP_FUNCTION(confirm_flakeid_compiled)
-{
-	char *arg = NULL;
-	int arg_len, len;
-	char *strg;
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	len = spprintf(&strg, 0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "flakeid", arg);
-	RETURN_STRINGL(strg, len, 0);
-}
-/* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and
    unfold functions in source code. See the corresponding marks just before
    function definition, where the functions purpose is also documented. Please
@@ -87,21 +66,45 @@ static void php_flakeid_init_globals(zend_flakeid_globals *flakeid_globals)
 
 /* {{{ PHP_MINIT_FUNCTION
  */
+static inline uint64_t __now_ms() {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec * 1000 + (tv.tv_usec / 1000);
+}
+
+static inline void __make_hexstr(unsigned char *out, const unsigned char *raw, int len) {
+	static const char *hex = "0123456789abcdef";
+	int i;
+
+	for (i = 0; i < len; i++) {
+		out[i * 2]       = hex[raw[i] >> 4];
+		out[(i * 2) + 1] = hex[raw[i] & 0x0F];
+	}
+}
+/* }}} */
+
+/* {{{ PHP_MINIT_FUNCTION
+ */
 PHP_MINIT_FUNCTION(flakeid)
 {
 	REGISTER_INI_ENTRIES();
 	unsigned char mac[6];
+	FLAKEID_G(last_ms) = 0;
 
 	if (FLAKEID_G(if_name) && !get_mac(FLAKEID_G(if_name), mac)) {
 		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(mac, 6);
+		get_ipv4(FLAKEID_G(if_name), &FLAKEID_G(ipv4));
+		memcpy(FLAKEID_G(mac), mac, 6);
 	} else if (FLAKEID_G(enable_spoof)) {
-		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create_with_spoof();
+		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create_with_spoof(mac);
+		FLAKEID_G(ipv4) = *(uint32_t *)(mac + 2);
+		memcpy(FLAKEID_G(mac), mac, 6);
 	} else {
 		FLAKEID_G(flakeid_ctx) = NULL;
 		return FAILURE;
 	}
 
-	FLAKEID_G(flakeid64_ctx) = flakeid64_ctx_create_with_spoof();
+	FLAKEID_G(flakeid64_ctx) = flakeid64_ctx_create_with_spoof(NULL);
 	return SUCCESS;
 }
 /* }}} */
@@ -223,14 +226,70 @@ ZEND_FUNCTION(flakeid_generate64)
 	}
 }
 
+ZEND_FUNCTION(flakeid_get_ipv4)
+{
+	zend_bool raw_output = 0;
+
+	if (zend_parse_parameters(
+		ZEND_NUM_ARGS() TSRMLS_CC,
+		"|b",
+		&raw_output) == FAILURE
+	) {
+		RETURN_NULL();
+	}
+
+	if (raw_output) {
+		RETURN_STRINGL((char *)&FLAKEID_G(ipv4), 4, 1);
+	} else {
+		unsigned char hexstr[8];
+		__make_hexstr(hexstr, (char *)&FLAKEID_G(ipv4), 4);
+		RETURN_STRINGL(hexstr, 8, 1);
+	}
+}
+
+ZEND_FUNCTION(flakeid_get_mac)
+{
+	zend_bool raw_output = 0;
+
+	if (zend_parse_parameters(
+		ZEND_NUM_ARGS() TSRMLS_CC,
+		"|b",
+		&raw_output) == FAILURE
+	) {
+		RETURN_NULL();
+	}
+
+	if (raw_output) {
+		RETURN_STRINGL(FLAKEID_G(mac), 6, 1);
+	} else {
+		unsigned char hexstr[12];
+		__make_hexstr(hexstr, (char *)&FLAKEID_G(mac), 6);
+		RETURN_STRINGL(hexstr, 12, 1);
+	}
+}
+
+ZEND_FUNCTION(flakeid_next_seq)
+{
+	uint64_t now = __now_ms();
+
+	if (now != FLAKEID_G(last_ms)) {
+		FLAKEID_G(last_ms) = now;
+		FLAKEID_G(seq) = 0;
+	}
+
+	RETURN_LONG(FLAKEID_G(seq)++);
+}
+
 /* {{{ flakeid_functions[]
  *
  * Every user visible function must have an entry in flakeid_functions[].
  */
 const zend_function_entry flakeid_functions[] = {
-	PHP_FE(confirm_flakeid_compiled,	NULL)		/* For testing, remove later. */
-	PHP_FE(flakeid_generate,	NULL)		/* For testing, remove later. */
-	PHP_FE(flakeid_generate64,	NULL)		/* For testing, remove later. */
+	PHP_FE(flakeid_generate,	NULL)
+	PHP_FE(flakeid_generate64,	NULL)
+	PHP_FE(flakeid_get_ipv4,	NULL)
+	PHP_FE(flakeid_get_mac,	NULL)
+	PHP_FE(flakeid_next_seq,	NULL)
 	PHP_FE_END	/* Must be the last line in flakeid_functions[] */
 };
 /* }}} */

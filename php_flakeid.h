@@ -45,6 +45,10 @@ extern zend_module_entry flakeid_module_entry;
 ZEND_BEGIN_MODULE_GLOBALS(flakeid)
 	flakeid_ctx_t *flakeid_ctx;
 	flakeid64_ctx_t *flakeid64_ctx;
+	uint32_t ipv4;
+	unsigned char mac[6];
+	uint64_t last_ms;
+	int seq;
 	char *if_name;
 	zend_bool enable_spoof;
 ZEND_END_MODULE_GLOBALS(flakeid)
