@@ -89,7 +89,7 @@ PHP_MINIT_FUNCTION(flakeid)
 {
 	REGISTER_INI_ENTRIES();
 	unsigned char mac[6];
-	FLAKEID_G(last_ms) = 0;
+	FLAKEID_G(last_flush_key) = 0;
 
 	if (FLAKEID_G(if_name) && !get_mac(FLAKEID_G(if_name), mac)) {
 		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(mac, 6);
@@ -270,10 +270,15 @@ ZEND_FUNCTION(flakeid_get_mac)
 
 ZEND_FUNCTION(flakeid_next_seq)
 {
-	uint64_t now = __now_ms();
+	long flush_key;
 
-	if (now != FLAKEID_G(last_ms)) {
-		FLAKEID_G(last_ms) = now;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &flush_key) == FAILURE
+	) {
+		RETURN_NULL();
+	}
+
+	if (flush_key != FLAKEID_G(last_flush_key)) {
+		FLAKEID_G(last_flush_key) = flush_key;
 		FLAKEID_G(seq) = 0;
 	}
 

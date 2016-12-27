@@ -47,8 +47,8 @@ ZEND_BEGIN_MODULE_GLOBALS(flakeid)
 	flakeid64_ctx_t *flakeid64_ctx;
 	uint32_t ipv4;
 	unsigned char mac[6];
-	uint64_t last_ms;
-	int seq;
+	long last_flush_key;
+	long seq;
 	char *if_name;
 	zend_bool enable_spoof;
 ZEND_END_MODULE_GLOBALS(flakeid)

@@ -29,14 +29,14 @@ echoBar();
 echo 'generate seq: ' . PHP_EOL;
 
 for ($i = 0; $i < 10; ++$i) {
-    var_dump(flakeid_next_seq());
+    var_dump(flakeid_next_seq((int)(gettimeofday(true) * 1000)));
 }
 
 echo "sleep 1 ms" . PHP_EOL;
 usleep(1000);
 
 for ($i = 0; $i < 10; ++$i) {
-    var_dump(flakeid_next_seq());
+    var_dump(flakeid_next_seq((int)(gettimeofday(true) * 1000)));
 }
 
 echoBar();
