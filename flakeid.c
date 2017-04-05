@@ -116,12 +116,12 @@ PHP_MSHUTDOWN_FUNCTION(flakeid)
 	UNREGISTER_INI_ENTRIES();
 
 	if (FLAKEID_G(flakeid_ctx)) {
-		flake_ctx_destroy(FLAKEID_G(flakeid_ctx));
+		flakeid_ctx_destroy(FLAKEID_G(flakeid_ctx));
 		FLAKEID_G(flakeid_ctx) = NULL;
 	}
 
 	if (FLAKEID_G(flakeid64_ctx)) {
-		flake64_ctx_destroy(FLAKEID_G(flakeid64_ctx));
+		flakeid64_ctx_destroy(FLAKEID_G(flakeid64_ctx));
 		FLAKEID_G(flakeid64_ctx) = NULL;
 	}
 
