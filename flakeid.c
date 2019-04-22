@@ -165,7 +165,7 @@ ZEND_FUNCTION(flakeid_generate)
 {
 	zend_bool raw_output = 0;
 	char *delimiter_str;
-	int delimiter_strlen;
+	size_t delimiter_strlen;
 
 	if (zend_parse_parameters(
 		ZEND_NUM_ARGS() TSRMLS_CC,
@@ -181,10 +181,10 @@ ZEND_FUNCTION(flakeid_generate)
 	flakeid_get(FLAKEID_G(flakeid_ctx), id);
 
 	if (raw_output) {
-		RETURN_STRINGL(id, 16, 1);
+		RETURN_STRINGL(id, 16);
 	} else {
 		char delimiter = '-';
-		int len = 35;
+		size_t len = 35;
 
 		if (delimiter_str) {
 			if (delimiter_strlen > 0) {
@@ -198,7 +198,8 @@ ZEND_FUNCTION(flakeid_generate)
 		unsigned char hexstr[len];
 
 		flakeid_hexdump(id, delimiter, hexstr);
-		RETURN_STRINGL(hexstr, len , 1);
+
+		RETURN_STRINGL(hexstr, len);
 	}
 }
 
@@ -218,11 +219,11 @@ ZEND_FUNCTION(flakeid_generate64)
 	flakeid64_get(FLAKEID_G(flakeid64_ctx), &id);
 
 	if (raw_output) {
-		RETURN_STRINGL((char *)&id, 8, 1);
+		RETURN_STRINGL((char *)&id, 8);
 	} else {
 		unsigned char hexstr[16];
 		flakeid64_hexdump(id, hexstr);
-		RETURN_STRINGL(hexstr, 16 , 1);
+		RETURN_STRINGL(hexstr, 16);
 	}
 }
 
@@ -239,11 +240,11 @@ ZEND_FUNCTION(flakeid_get_ipv4)
 	}
 
 	if (raw_output) {
-		RETURN_STRINGL((char *)&FLAKEID_G(ipv4), 4, 1);
+		RETURN_STRINGL((char *)&FLAKEID_G(ipv4), 4);
 	} else {
 		unsigned char hexstr[8];
 		__make_hexstr(hexstr, (char *)&FLAKEID_G(ipv4), 4);
-		RETURN_STRINGL(hexstr, 8, 1);
+		RETURN_STRINGL(hexstr, 8);
 	}
 }
 
@@ -260,11 +261,11 @@ ZEND_FUNCTION(flakeid_get_mac)
 	}
 
 	if (raw_output) {
-		RETURN_STRINGL(FLAKEID_G(mac), 6, 1);
+		RETURN_STRINGL(FLAKEID_G(mac), 6);
 	} else {
 		unsigned char hexstr[12];
 		__make_hexstr(hexstr, (char *)&FLAKEID_G(mac), 6);
-		RETURN_STRINGL(hexstr, 12, 1);
+		RETURN_STRINGL(hexstr, 12);
 	}
 }
 
