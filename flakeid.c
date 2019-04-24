@@ -164,8 +164,8 @@ PHP_MINFO_FUNCTION(flakeid)
 ZEND_FUNCTION(flakeid_generate)
 {
 	zend_bool raw_output = 0;
-	char *delimiter_str;
-	size_t delimiter_strlen;
+	char *delimiter_str = NULL;
+	size_t delimiter_strlen = 0;
 
 	if (zend_parse_parameters(
 		ZEND_NUM_ARGS() TSRMLS_CC,
