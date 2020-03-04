@@ -46,7 +46,7 @@ ZEND_BEGIN_MODULE_GLOBALS(flakeid)
 	flakeid_ctx_t *flakeid_ctx;
 	flakeid64_ctx_t *flakeid64_ctx;
 	uint32_t ipv4;
-	unsigned char mac[6];
+	unsigned char addr[6];
 	long last_flush_key;
 	long seq;
 	char *if_name;

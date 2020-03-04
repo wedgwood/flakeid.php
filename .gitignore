@@ -34,3 +34,5 @@ tests/*/*.exp
 tests/*/*.log
 tests/*/*.sh
 tags
+.DS_Store
+*.tmp

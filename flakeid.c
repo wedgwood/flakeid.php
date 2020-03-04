@@ -34,6 +34,7 @@ ZEND_DECLARE_MODULE_GLOBALS(flakeid)
 
 /* True global resources - no need for thread safety here */
 static int le_flakeid;
+static char if_name[64];
 
 /* {{{ PHP_INI
  */
@@ -88,21 +89,26 @@ static inline void __make_hexstr(unsigned char *out, const unsigned char *raw, i
 PHP_MINIT_FUNCTION(flakeid)
 {
 	REGISTER_INI_ENTRIES();
-	unsigned char mac[6];
+	unsigned char addr[6];
 	FLAKEID_G(last_flush_key) = 0;
 
-	if (FLAKEID_G(if_name) && !get_mac(FLAKEID_G(if_name), mac)) {
-		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(mac, 6);
+	if (FLAKEID_G(if_name) && !get_ifaddr(FLAKEID_G(if_name), addr)) {
+		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(addr, 6);
 		get_ipv4(FLAKEID_G(if_name), &FLAKEID_G(ipv4));
-		memcpy(FLAKEID_G(mac), mac, 6);
+		memcpy(FLAKEID_G(addr), addr, 6);
+	} else if (!get_first_ifaddr(addr, if_name, sizeof(if_name))) {
+		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create(addr, 6);
+		get_ipv4(if_name, &FLAKEID_G(ipv4));
+		memcpy(FLAKEID_G(addr), addr, 6);
 	} else if (FLAKEID_G(enable_spoof)) {
-		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create_with_spoof(mac);
-		FLAKEID_G(ipv4) = *(uint32_t *)(mac + 2);
-		memcpy(FLAKEID_G(mac), mac, 6);
+		FLAKEID_G(flakeid_ctx) = flakeid_ctx_create_with_spoof(addr);
+		FLAKEID_G(ipv4) = *(uint32_t *)(addr + 2);
+		memcpy(FLAKEID_G(addr), addr, 6);
 	} else {
 		FLAKEID_G(flakeid_ctx) = NULL;
 		return FAILURE;
 	}
+
 
 	FLAKEID_G(flakeid64_ctx) = flakeid64_ctx_create_with_spoof(NULL);
 	return SUCCESS;
@@ -196,7 +202,6 @@ ZEND_FUNCTION(flakeid_generate)
 		}
 
 		unsigned char hexstr[len];
-
 		flakeid_hexdump(id, delimiter, hexstr);
 
 		RETURN_STRINGL(hexstr, len);
@@ -248,7 +253,7 @@ ZEND_FUNCTION(flakeid_get_ipv4)
 	}
 }
 
-ZEND_FUNCTION(flakeid_get_mac)
+ZEND_FUNCTION(flakeid_get_ifaddr)
 {
 	zend_bool raw_output = 0;
 
@@ -261,10 +266,10 @@ ZEND_FUNCTION(flakeid_get_mac)
 	}
 
 	if (raw_output) {
-		RETURN_STRINGL(FLAKEID_G(mac), 6);
+		RETURN_STRINGL(FLAKEID_G(addr), 6);
 	} else {
 		unsigned char hexstr[12];
-		__make_hexstr(hexstr, (char *)&FLAKEID_G(mac), 6);
+		__make_hexstr(hexstr, (char *)&FLAKEID_G(addr), 6);
 		RETURN_STRINGL(hexstr, 12);
 	}
 }
@@ -294,7 +299,7 @@ const zend_function_entry flakeid_functions[] = {
 	PHP_FE(flakeid_generate,	NULL)
 	PHP_FE(flakeid_generate64,	NULL)
 	PHP_FE(flakeid_get_ipv4,	NULL)
-	PHP_FE(flakeid_get_mac,	NULL)
+	PHP_FE(flakeid_get_ifaddr,	NULL)
 	PHP_FE(flakeid_next_seq,	NULL)
 	PHP_FE_END	/* Must be the last line in flakeid_functions[] */
 };
